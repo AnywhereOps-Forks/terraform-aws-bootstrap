@@ -3,5 +3,6 @@ variable "account_alias" {
 }
 
 variable "dynamodb_table_name" {
-  type = string
+  type    = string
+  default = null
 }

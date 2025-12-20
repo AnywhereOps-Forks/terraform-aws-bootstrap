@@ -22,8 +22,8 @@ variable "dynamodb_point_in_time_recovery" {
 }
 
 variable "dynamodb_table_name" {
-  description = "Name of the DynamoDB Table for locking Terraform state."
-  default     = "terraform-state-lock"
+  description = "Name of the DynamoDB Table for locking Terraform state. If null, no table is created (use S3 native locking with Terraform 1.10+)."
+  default     = null
   type        = string
 }
 

@@ -5,7 +5,7 @@ This solves a 🐓 and 🥚 problem in new AWS accounts (or for AWS accounts tha
 * AWS Account Alias for the AWS account
 * S3 bucket for remote state file (using the TrussWorks [s3-private-bucket module](https://registry.terraform.io/modules/trussworks/s3-private-bucket/aws))
 * S3 bucket for storing state bucket access logs (using the TrussWorks [logs module](https://registry.terraform.io/modules/trussworks/logs/aws))
-* DynamoDB table for state locking and consistency checking
+* DynamoDB table for state locking and consistency checking (optional, disabled by default for Terraform 1.10+ S3 native locking)
 
 If the AWS account you are using already has a Terraform state bucket and locking table, this may not be the right tool for you.
 
@@ -111,11 +111,45 @@ To submit a PR, fork the repo and enable Github Actions. Enabling Github Actions
 
 ## Using the backend
 
-After provisioning the S3 bucket and the DynamoDB table, you need to tell Terraform that it exists and to use it. You do so by defining a backend. You can create a file called `terraform.tf` in your directory's root.
+After provisioning the S3 bucket, you need to tell Terraform that it exists and to use it. You do so by defining a backend. You can create a file called `terraform.tf` in your directory's root.
+
+### S3 Native Locking (Terraform 1.10+, default)
+
+By default, this module does not create a DynamoDB table. Use S3 native locking with Terraform 1.10+:
 
 ```hcl
 terraform {
-  required_version = "~> 0.13"
+  required_version = ">= 1.10"
+
+  backend "s3" {
+    bucket       = "bucket-name"
+    key          = "path-to/terraform.tfstate"
+    region       = "region"
+    encrypt      = "true"
+    use_lockfile = true
+  }
+}
+```
+
+### DynamoDB Locking (legacy)
+
+If you need DynamoDB-based locking (for older Terraform versions or existing setups), set `dynamodb_table_name` when calling the module:
+
+```hcl
+module "bootstrap" {
+  source = "trussworks/bootstrap/aws"
+
+  region              = "us-west-2"
+  account_alias       = "<ORG>-<NAME>"
+  dynamodb_table_name = "terraform-state-lock"
+}
+```
+
+Then configure the backend:
+
+```hcl
+terraform {
+  required_version = ">= 1.0"
 
   backend "s3" {
     bucket         = "bucket-name"

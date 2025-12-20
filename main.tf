@@ -54,6 +54,7 @@ module "terraform_state_bucket_logs" {
 # The terraform state lock is meant to be ephemeral and does not need recovery
 #tfsec:ignore:AWS086
 resource "aws_dynamodb_table" "terraform_state_lock" {
+  count    = var.dynamodb_table_name != null ? 1 : 0
   name     = var.dynamodb_table_name
   hash_key = "LockID"
 
